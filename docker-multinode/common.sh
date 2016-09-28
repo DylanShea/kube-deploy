@@ -263,6 +263,20 @@ kube::multinode::start_k8s_worker_proxy() {
         --v=2
 }
 
+# Wait for k8s apiserver to be up
+kube::multinode::wait_for_apiserver() {
+
+  # Wait for apiserver to come up
+  local SECONDS=0
+  while [[ $(curl -fsSL http://localhost:8080/healthz 2>&1 1>/dev/null; echo $?) != 0 ]]; do
+    ((SECONDS++))
+    if [[ ${SECONDS} == ${TIMEOUT_FOR_SERVICES} ]]; then
+      kube::log::fatal "k8s apiserver failed to start. Exiting..."
+    fi
+    sleep 1
+  done
+}
+
 # Turndown the local cluster
 kube::multinode::turndown(){
 
