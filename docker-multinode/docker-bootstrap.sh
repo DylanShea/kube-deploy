@@ -16,6 +16,24 @@
 
 # Utility functions for Kubernetes in docker setup and bootstrap mode
 
+# Wait for docker to start
+kube::bootstrap::docker_wait() {
+
+ kube::log::status "Waiting for docker to start..."
+
+  # Wait for docker bootstrap to start by "docker ps"-ing every second
+  local SECONDS=0
+  while [[ $(docker -H ${BOOTSTRAP_DOCKER_SOCK} ps 2>&1 1>/dev/null; echo $?) != 0 ]]; do
+    ((SECONDS++))
+    if [[ ${SECONDS} == ${TIMEOUT_FOR_SERVICES} ]]; then
+      kube::log::fatal "docker bootstrap failed to start. Exiting..."
+    fi
+    sleep 1
+  done
+
+  kube::log::status "Docker started."
+}
+
 # Start a docker bootstrap for running etcd and flannel
 kube::bootstrap::bootstrap_daemon() {
 
@@ -32,15 +50,7 @@ kube::bootstrap::bootstrap_daemon() {
       2> /var/log/docker-bootstrap.log \
       1> /dev/null &
 
-  # Wait for docker bootstrap to start by "docker ps"-ing every second
-  local SECONDS=0
-  while [[ $(docker -H ${BOOTSTRAP_DOCKER_SOCK} ps 2>&1 1>/dev/null; echo $?) != 0 ]]; do
-    ((SECONDS++))
-    if [[ ${SECONDS} == ${TIMEOUT_FOR_SERVICES} ]]; then
-      kube::log::fatal "docker bootstrap failed to start. Exiting..."
-    fi
-    sleep 1
-  done
+  kube::bootstrap::docker_wait
 }
 
 # Configure docker net settings, then restart it
