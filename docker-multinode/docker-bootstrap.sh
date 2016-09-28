@@ -91,6 +91,7 @@ kube::bootstrap::restart_docker(){
       sleep 1
     done
     service docker start
+    kube::bootstrap::docker_wait
   else
     kube::log::fatal "Error: docker-bootstrap currently only supports ubuntu|debian|amzn|centos|systemd."
   fi
@@ -113,6 +114,7 @@ kube::bootstrap::restart_docker_systemd(){
   systemctl daemon-reload
   systemctl daemon-reload
   systemctl restart docker
+  kube::bootstrap::docker_wait
 }
 
 kube::helpers::replace_mtu_bip(){
